@@ -2,6 +2,7 @@ from os import access
 import time
 from flask import Flask, request, jsonify, send_file, redirect, session, Response, flash
 import datetime
+from flask.helpers import get_flashed_messages
 import pytz
 import csv
 from decouple import config
@@ -274,7 +275,9 @@ def box_auth_redirect():
     code = request.args.get('code')
 
     if state != box_csrf_token: #error if csrf tokens dont match
-        return 'Tokens do not match'
+        flash('Something went wrong when authenticating (CSRF tokens do not match).', 'error')
+        return redirect('http://localhost:3000/', code=302)
+        #return 'Tokens do not match'
     access_token, refresh_token = box_oauth.authenticate(code)
 
     return redirect('http://localhost:3000/', code=302)
@@ -305,3 +308,16 @@ def box_get_folder_csvs(folder_id):
 def box_get_user_info():
     r = make_box_request('/users/me')
     return r.json()
+
+@app.route('/get_flashes')
+def get_flashes():
+    flash('test', 'info')
+    flash('bad message', 'error')
+    flash('cool message', 'success')
+    output = {}
+    flashlist = []
+    for f in get_flashed_messages(with_categories=True):
+        flashlist.append({ 'text': f[1], 'category': f[0] })
+    output['flashes'] = flashlist
+    output_json = json.dumps(output)
+    return Response(output_json, mimetype='application/json')
