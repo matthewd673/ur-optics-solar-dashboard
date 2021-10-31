@@ -3,12 +3,22 @@ import { Alert } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 
 const FlashBubble = (props) => {
+
+    const [show, setShow] = useState(true);
+
     let variant = 'secondary';
     
     if (props.category === 'info') { variant = 'info' }
     if (props.category === 'error') { variant = 'danger' }
     if (props.category === 'success') { variant = 'success' }
-    return <Alert variant={variant} dismissible>{props.text}</Alert> //TODO: onClose
+    if (show) {
+        return <Alert
+            variant={variant}
+            onClose={() => setShow(false)}
+            dismissible>
+                {props.text}
+            </Alert>
+    } else { return null; }
 }
 
 const FlashView = () => {

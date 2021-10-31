@@ -12,21 +12,3 @@
     background-color: rgb(238, 199, 199);
     border-radius: 8px;
 }
-
-.flash-view-bubble-text {
-    padding: 0px;
-    margin: 0px;
-    color: white;
-}
-
-.flash-view-category-error {
-    background-color: red;
-}
-
-.flash-view-category-success {
-    background-color: #b7f3cb;
-}
-
-.flash-view-category-info {
-    background-color: #3583ff;
-}

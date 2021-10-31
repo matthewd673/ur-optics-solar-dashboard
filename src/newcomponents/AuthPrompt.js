@@ -1,12 +1,14 @@
 import './AuthPrompt.css';
-import { Button } from 'react-bootstrap';
+import { Button, Alert } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 
 const AuthButton = () => {
     return (
-        <Button onClick={
-            () => { window.location.href = 'http://localhost:5000/box/get_auth_url'}
-        }>Login with Box</Button>
+        <Button 
+            onClick={() => { window.location.href = 'http://localhost:5000/box/get_auth_url'}}
+            >
+                Login with Box
+            </Button>
     );
 }
 
@@ -27,10 +29,10 @@ const AuthPrompt = () => {
     if (authStatus === 'false') { //no access token, so prompt for sign in
         return (
             <>
-                <div className="auth-prompt-wrapper">
-                    <p className="auth-prompt-text">You must log in with your Box account to view and download sensor data.</p>
-                    <AuthButton />
-                </div>
+                <Alert className="d-flex align-items-center justify-content-between" variant='primary'>
+                    <p style={{marginBottom: 0}}>You must log in with your Box account to view and download sensor data.</p>
+                    <div><AuthButton /></div>
+                </Alert>
             </>
         );
     }
