@@ -42,7 +42,7 @@ box_oauth = OAuth2(
 
 box_client = Client(box_oauth)
 
-box_auth_url, box_csrf_token = box_oauth.get_authorization_url('http://localhost:5000/box_auth_redirect')
+box_auth_url, box_csrf_token = box_oauth.get_authorization_url('http://localhost:5000/box/auth_redirect')
 
 # db.test.insert_one({'title': "todo title", 'body': "todo body"})
 @app.route('/test_insert')
@@ -251,17 +251,17 @@ def get_csv():
     return send_file("./CR300Series_DataOut.csv", as_attachment=True, attachment_filename="CR300Series_DataOut.csv")
 
 
-@app.route('/get_box_has_auth')
+@app.route('/box/get_has_auth')
 def get_box_has_auth():
     if session.get('access_token') is not None:
         return 'true'
     return 'false'
 
-@app.route('/get_box_auth_url')
+@app.route('/box/get_auth_url')
 def get_box_auth_url():
     return redirect(box_auth_url, code=302) #302 because auth link can change. I think that makes sense.
 
-@app.route('/box_auth_redirect', methods=['GET'])
+@app.route('/box/auth_redirect', methods=['GET'])
 def box_auth_redirect():
     state = request.args.get('state') #should match box_csrf_token
     code = request.args.get('code')
@@ -272,7 +272,7 @@ def box_auth_redirect():
 
     return redirect('http://localhost:3000/', code=302)
 
-@app.route('/get_box_file', methods=['GET'])
+@app.route('/box/get_file', methods=['GET'])
 def box_get_file():
     file_id = request.args.get('id')
     file_url = 'https://api.box.com/2.0/files/' + file_id + '/content/'
@@ -282,7 +282,7 @@ def box_get_file():
     r = requests.get(file_url, headers=r_headers)
     return str(r.content)
 
-@app.route('/get_box_user_info')
+@app.route('/box/get_user_info')
 def box_get_user_info():
     user_url = 'https://api.box.com/2.0/users/me'
     r_headers = { 'Authorization': 'Bearer ' + session['access_token'],

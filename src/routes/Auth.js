@@ -3,13 +3,7 @@ import '../App.css';
 import 'react-pro-sidebar/dist/css/styles.css';
 
 import SidebarLayout from '../newcomponents/SidebarLayout';
-import { Button } from 'react-bootstrap';
-
-const AuthButton = () => {
-    return (
-        <Button onClick={ () => { window.location.href = 'http://localhost:5000/get_box_auth_url' } }>Authenticate with Box</Button>
-    )
-}
+import { AuthButton } from '../newcomponents/AuthPrompt';
 
 const Auth = () => {
     return (

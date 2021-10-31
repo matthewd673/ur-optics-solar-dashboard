@@ -17,13 +17,13 @@ const SidebarUsername = () => {
     }, []);
 
     const checkHasAuth = async () => {
-        const response = await fetch('/get_box_has_auth');
+        const response = await fetch('/box/get_has_auth');
         const data = await response.text();
         setAuthStatus(data);
     }
 
     const getUserInfo = async () => { //get box username from backend
-        const response = await fetch('/get_box_user_info');
+        const response = await fetch('/box/get_user_info');
         const data = await response.json();
         setUsername(data['name']);
     }

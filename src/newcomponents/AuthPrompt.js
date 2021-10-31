@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 const AuthButton = () => {
     return (
         <Button onClick={
-            () => { window.location.href = 'http://localhost:5000/get_box_auth_url'}
+            () => { window.location.href = 'http://localhost:5000/box/get_auth_url'}
         }>Login with Box</Button>
     );
 }
@@ -19,7 +19,7 @@ const AuthPrompt = () => {
     }, []);
 
     const checkHasAuth = async () => { //check if the backend has an access_token
-        const response = await fetch('/get_box_has_auth');
+        const response = await fetch('/box/get_has_auth');
         const data = await response.text();
         setAuthStatus(data);
     }
