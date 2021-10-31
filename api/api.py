@@ -1,7 +1,7 @@
 from os import access
 import time
 from boxsdk.session.session import AuthorizedSession
-from flask import Flask, request, jsonify, send_file, redirect, session, flash
+from flask import Flask, request, jsonify, send_file, redirect, session, Response, flash
 import datetime
 import pytz
 import csv
@@ -251,6 +251,13 @@ def get_csv():
     return send_file("./CR300Series_DataOut.csv", as_attachment=True, attachment_filename="CR300Series_DataOut.csv")
 
 
+def make_box_request(path):
+    headers = { 'Authorization': 'Bearer ' + session['access_token'],
+                'Content-Type': 'application/json' }
+    r = requests.get('https://api.box.com/2.0' + path, headers=headers)
+    r.close()
+    return r
+
 @app.route('/box/get_has_auth')
 def get_box_has_auth():
     if session.get('access_token') is not None:
@@ -272,20 +279,27 @@ def box_auth_redirect():
 
     return redirect('http://localhost:3000/', code=302)
 
-@app.route('/box/get_file', methods=['GET'])
-def box_get_file():
-    file_id = request.args.get('id')
-    file_url = 'https://api.box.com/2.0/files/' + file_id + '/content/'
-    r_headers = { 'Authorization': 'Bearer ' + session['access_token'],
-                'Content-Type': 'application/json' }
-    
-    r = requests.get(file_url, headers=r_headers)
-    return str(r.content)
+@app.route('/box/get_csv/<file_id>', methods=['GET'])
+def box_get_csv(file_id):
+    r = make_box_request('/files/' + file_id + '/content')
+    file = r.content
+    return Response(file, mimetype='text/csv')
+
+@app.route('/box/get_folder/<folder_id>', methods=['GET'])
+def box_get_folder(folder_id):
+    r = make_box_request('/folders/' + folder_id + '/items/')
+    folder = r.json()
+    ct = folder['total_count']
+    entries = folder['entries']
+
+    output = '<ul>'
+    for entry in entries:
+        output += '<li><a href="/box/get_csv/' + entry['id'] + '">' + entry['name'] + '</a></li>'
+    output += '</ul>'
+
+    return output
 
 @app.route('/box/get_user_info')
 def box_get_user_info():
-    user_url = 'https://api.box.com/2.0/users/me'
-    r_headers = { 'Authorization': 'Bearer ' + session['access_token'],
-                'Content-Type': 'application/json' }
-    r = requests.get(user_url, headers=r_headers)
+    r = make_box_request('/users/me')
     return r.json()
