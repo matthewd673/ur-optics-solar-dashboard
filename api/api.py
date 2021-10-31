@@ -1,6 +1,5 @@
 from os import access
 import time
-from boxsdk.session.session import AuthorizedSession
 from flask import Flask, request, jsonify, send_file, redirect, session, Response, flash
 import datetime
 import pytz
@@ -9,6 +8,7 @@ from decouple import config
 import requests
 from boxsdk import Client, OAuth2
 import secrets
+import json
 
 from flask_pymongo import PyMongo
 
@@ -285,19 +285,21 @@ def box_get_csv(file_id):
     file = r.content
     return Response(file, mimetype='text/csv')
 
-@app.route('/box/get_folder/<folder_id>', methods=['GET'])
-def box_get_folder(folder_id):
+@app.route('/box/get_folder_csvs/<folder_id>', methods=['GET'])
+def box_get_folder_csvs(folder_id):
     r = make_box_request('/folders/' + folder_id + '/items/')
-    folder = r.json()
+    folder = r.json();
     ct = folder['total_count']
     entries = folder['entries']
 
-    output = '<ul>'
+    file_ids = []
     for entry in entries:
-        output += '<li><a href="/box/get_csv/' + entry['id'] + '">' + entry['name'] + '</a></li>'
-    output += '</ul>'
-
-    return output
+        if (entry['name'].endswith('.csv')):
+            file_ids.append(entry['id'])
+    output = {}
+    output['files'] = file_ids
+    output_json = json.dumps(output)
+    return Response(output_json, mimetype='application/json')
 
 @app.route('/box/get_user_info')
 def box_get_user_info():
