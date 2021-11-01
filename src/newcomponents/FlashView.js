@@ -22,25 +22,32 @@ const FlashBubble = (props) => {
 }
 
 const FlashView = () => {
-    const [flashMessages, setFlashMessages] = useState([]);
+    const [flashes, setFlashes] = useState([]);
+    const [flashCt, setFlashCt] = useState(0);
 
     useEffect(() => {
-        getFlashMessages();
+        const getFlashes = async () => {
+            const response = await fetch('/get_flashes');
+            const data = await response.json();
+    
+            if (data.flashes.length !== 0) { //skip if no flashes
+                setFlashCt(flashCt => flashCt + data.flashes.length);
+                setFlashes(data.flashes.reverse());
+            }
+        }
+
+        const interval = setInterval(() => {
+            getFlashes();
+        }, 5000);
+        return () => clearInterval(interval);
     }, []);
-
-    const getFlashMessages = async () => {
-        const response = await fetch('/get_flashes');
-        const data = await response.json();
-
-        setFlashMessages(data.flashes.reverse());
-    }
 
     return (
         <>
             <div className="flash-view-wrapper">
-                {flashMessages.map(message =>
+                {flashes.map((message, i) =>
                     <FlashBubble
-                        key={message['text']}
+                        key={flashCt}
                         text={message['text']}
                         category={message['category']}
                         />

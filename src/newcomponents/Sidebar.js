@@ -33,7 +33,7 @@ const Sidebar = props => {
             </div>
             <footer>
                 <SidebarUsername />
-                <p>Created with ❤️ by Roclab</p>
+                <p>Created with ❤️ by RocLab</p>
             </footer>
         </div>
     )

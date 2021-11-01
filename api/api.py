@@ -2,6 +2,7 @@ from os import access
 import time
 from flask import Flask, request, jsonify, send_file, redirect, session, Response, flash
 import datetime
+import flask
 from flask.helpers import get_flashed_messages
 import pytz
 import csv
@@ -253,10 +254,21 @@ def get_csv():
 
 
 def make_box_request(path):
-    headers = { 'Authorization': 'Bearer ' + session['access_token'],
+    bearer_token = 'none' #this way we'll at least get a 403 before everything breaks
+    if session.get('access_token') == None:
+        flash('No access token', 'error')
+    else:
+        bearer_token = session['access_token']
+    
+    headers = { 'Authorization': 'Bearer ' + bearer_token,
                 'Content-Type': 'application/json' }
     r = requests.get('https://api.box.com/2.0' + path, headers=headers)
     r.close()
+
+    if r.status_code != 200:
+        flash('Box API returned ' + str(r.status_code))
+        return None #make it easier for the other methods to check for errors
+    
     return r
 
 @app.route('/box/get_has_auth')
@@ -285,12 +297,22 @@ def box_auth_redirect():
 @app.route('/box/get_csv/<file_id>', methods=['GET'])
 def box_get_csv(file_id):
     r = make_box_request('/files/' + file_id + '/content')
+    
+    if r == None: #TODO: temporary, but better
+        flash('Could not download from Box', 'error')
+        return ''
+    
     file = r.content
     return Response(file, mimetype='text/csv')
 
 @app.route('/box/get_folder_csvs/<folder_id>', methods=['GET'])
 def box_get_folder_csvs(folder_id):
     r = make_box_request('/folders/' + folder_id + '/items/')
+    
+    if r == None: #TODO: temporary, but better
+        flash('Could not read Box folder', 'error')
+        return ''
+    
     folder = r.json();
     ct = folder['total_count']
     entries = folder['entries']
@@ -307,17 +329,22 @@ def box_get_folder_csvs(folder_id):
 @app.route('/box/get_user_info')
 def box_get_user_info():
     r = make_box_request('/users/me')
+
+    if r == None: #TODO: temporary, but better
+        flash('Could not get user info', 'error')
+        return ''
+
     return r.json()
 
 @app.route('/get_flashes')
 def get_flashes():
-    flash('test', 'info')
-    flash('bad message', 'error')
-    flash('cool message', 'success')
     output = {}
     flashlist = []
     for f in get_flashed_messages(with_categories=True):
         flashlist.append({ 'text': f[1], 'category': f[0] })
     output['flashes'] = flashlist
     output_json = json.dumps(output)
+
+    session.pop('_flashes', None) #TODO: flash messages won't clear
+    flashlist = []
     return Response(output_json, mimetype='application/json')
