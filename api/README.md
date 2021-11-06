@@ -9,6 +9,16 @@ So its only real purpose is to get us an `access_token` that can be used for man
 * Currently, the `access_token` and `refresh_token` are stored in the Flask session (and can therefore be accessed from the frontend with a bit of work). This is a bad idea in terms of security, and should be changed later (see `store_tokens()`).
 * Right now the API is essentially working under the assumption that nothing will go wrong, and doesn't have any sort of error handling. This is a WIP.
 
+## .env
+The server expects the following values to be found within `/api/.env` *(not tracked with Git)*.
+They are all fairly self-explanatory
+* `BOX_CLIENT_ID`
+* `BOX_CLIENT_SECRET`
+* `OAUTHLIB_INSECURE_TRANSPORT=1` *for testing on localhost only!*
+* `MONGO_USERNAME`
+* `MONGO_PASSWORD`
+* `MONGO_DB` *the name of the specific database*
+
 ## Box Authentication
 
 The following are used for OAuth2 authentication with Box. 
