@@ -383,5 +383,52 @@ def get_flashes():
 @app.route('/dbtest')
 def dbtest():
     #arbitrary test
-    example = mongo.db.schematest.find_one_or_404({'MST': '15'})
-    return 'Year: ' + example['Year']
+    example = db.schematest.find_one_or_404({'MST': '15'})
+    testdoc = {'name': 'matt', 'age': 19, 'test': 'hello'}
+    docid = db.pytest.insert_one(testdoc).inserted_id
+    return str(docid)
+
+@app.route('/dbcsvtest/<file_id>')
+def dbcsvtest(file_id):
+    headerData = [
+        ['', ''], # 0
+        ['Year', 'year'],     # 1
+        ['DOY', 'doy'],      # 2
+        ['MST', 'mst'],      # 3
+        ['Global Horizontal [W/m^2]', 'global_horizontal'],    # 4
+        ["Direct Normal [W/m^2]", 'direct_normal'],        # 5
+        ["Diffuse Horizontal [W/m^2]", 'diffuse_horizontal'],
+        ["PR1 Temperature [deg C]", 'pr1_temperature'], 
+        ["PH1 Temperature [deg C]", 'ph1_temperature'],
+        ["Pressure [mBar]", 'pressure'],              # 9
+        ["Zenith Angle [degrees]", 'zenith_angle'],
+        ["Azimuth Angle [degrees]", 'azimuth_angle'],
+        ["RaZON Status", 'razon_status'],
+        ["RaZON Time [hhmm]", 'razon_time'],            # 13
+        ["Logger Battery [VDC]", 'logger_battery'],
+        ["Logger Temp [deg C]", 'logger_temp'],
+    ]
+    r = box_get_csv_text(file_id)
+    if r.status_code != 200:
+        return 'error'
+    csvtext = r.get_data(as_text=True)
+    reader = csv.reader(csvtext,delimiter=',')
+    header = next(reader)
+
+    #TODO: This is so, so broken
+    count = 1
+    docs = []
+    for line in reader:
+        count+=1
+
+        linedoc = {}
+        i = 0
+        for header in headerData:
+            if i < len(line):
+                linedoc[header[1]] = line[i]
+            else:
+                print('line ' + str(count) + ' missing ' + header[1])
+                break
+        docs.append(linedoc)
+    db.pytest.insert_many(docs)
+    return 'inserted ' + str(len(docs)) + ' docs'
