@@ -2,7 +2,6 @@ from os import access
 import time
 from flask import Flask, request, jsonify, send_file, redirect, session, Response, flash
 import datetime
-import flask
 from flask.helpers import get_flashed_messages
 import pytz
 import csv
@@ -24,8 +23,11 @@ counter = 0
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
-mongodb_client = PyMongo(app, uri="mongodb://localhost:27017/solar_dashboard_database")
-db = mongodb_client.db
+app.config['MONGO_URI'] = 'mongodb+srv://' + config('MONGO_USERNAME') + ':' + config('MONGO_PASSWORD') + '@cluster0.hyoe7.mongodb.net/' + config('MONGO_DB') + '?retryWrites=true&w=majority'
+mongo = PyMongo(app)
+db = mongo.db
+#mongodb_client = PyMongo(app, uri="mongodb://localhost:27017/solar_dashboard_database")
+#db = mongodb_client.db
 
 #box api info
 box_client_id = config('BOX_CLIENT_ID')
@@ -252,7 +254,6 @@ def get_csv():
     # Send the file back to the client
     return send_file("./CR300Series_DataOut.csv", as_attachment=True, attachment_filename="CR300Series_DataOut.csv")
 
-
 def make_box_request(path):
     bearer_token = 'none' #this way we'll at least get a 403 before everything breaks
     if session.get('access_token') == None:
@@ -267,7 +268,6 @@ def make_box_request(path):
 
     if r.status_code != 200:
         flash('Box API returned ' + str(r.status_code))
-        return None #make it easier for the other methods to check for errors
     
     return r
 
@@ -294,24 +294,55 @@ def box_auth_redirect():
 
     return redirect('http://localhost:3000/', code=302)
 
+# def parse_csv(text):
+#     csv_headers = ['','Year','DOY','MST','Global Horizontal [W/m^2]','Direct Normal [W/m^2]','Diffuse Horizontal [W/m^2]','PR1 Temperature [deg C]','PH1 Temperature [deg C]','Pressure [mBar]','Zenith Angle [degrees]','Azimuth Angle [degrees]','RaZON Status','RaZON Time [hhmm]','Logger Battery [VDC]','Logger Temp [deg C]']
+#     r = csv.DictReader(text)
+#     output = ''
+#     for row in r:
+#         output += row.keys()
+#     return output
+
+# @app.route('/box/print_csv/<file_id>', methods=['GET'])
+# def box_print_csv(file_id):
+#     file = box_get_csv_text(file_id)
+#     if file.status_code != 200:
+#         flash ('Could not parse CSV', 'error')
+    
+#     if file == '':
+#         flash('Requested CSV is empty', 'info')
+#         return ''
+#     return parse_csv(file.get_data(as_text=True))
+
 @app.route('/box/get_csv/<file_id>', methods=['GET'])
 def box_get_csv(file_id):
     r = make_box_request('/files/' + file_id + '/content')
     
-    if r == None: #TODO: temporary, but better
+    if r.status_code != 200: #TODO: temporary, but better
         flash('Could not download from Box', 'error')
-        return ''
+        return Response('Could not download from Box', r.status_code)
     
     file = r.content
     return Response(file, mimetype='text/csv')
+
+#largely identical to box_get_csv, just different mimetype
+@app.route('/box/get_csv_text/<file_id>', methods=['GET'])
+def box_get_csv_text(file_id):
+    r = make_box_request('/files/' + file_id + '/content')
+
+    if r.status_code != 200: #TODO: temporary, but better
+        flash('Could not download from Box', 'error')
+        return Response('Could not download from Box', r.status_code)
+    
+    file = r.content
+    return Response(file, mimetype='text/plain')
 
 @app.route('/box/get_folder_csvs/<folder_id>', methods=['GET'])
 def box_get_folder_csvs(folder_id):
     r = make_box_request('/folders/' + folder_id + '/items/')
     
-    if r == None: #TODO: temporary, but better
+    if r.status_code != 200: #TODO: temporary, but better
         flash('Could not read Box folder', 'error')
-        return ''
+        return Response('Could not read Box folder', r.status_code)
     
     folder = r.json();
     ct = folder['total_count']
@@ -330,9 +361,9 @@ def box_get_folder_csvs(folder_id):
 def box_get_user_info():
     r = make_box_request('/users/me')
 
-    if r == None: #TODO: temporary, but better
+    if r.status_code != 200: #TODO: temporary, but better
         flash('Could not get user info', 'error')
-        return ''
+        return Response('Could not get user info', r.status_code)
 
     return r.json()
 
@@ -348,3 +379,9 @@ def get_flashes():
     session.pop('_flashes', None) #TODO: flash messages won't clear
     flashlist = []
     return Response(output_json, mimetype='application/json')
+
+@app.route('/dbtest')
+def dbtest():
+    #arbitrary test
+    example = mongo.db.schematest.find_one_or_404({'MST': '15'})
+    return 'Year: ' + example['Year']
