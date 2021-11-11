@@ -391,20 +391,20 @@ def dbtest():
 @app.route('/dbcsvtest/<file_id>')
 def dbcsvtest(file_id):
     headerData = [
-        ['', ''], # 0
-        ['Year', 'year'],     # 1
-        ['DOY', 'doy'],      # 2
-        ['MST', 'mst'],      # 3
-        ['Global Horizontal [W/m^2]', 'global_horizontal'],    # 4
-        ["Direct Normal [W/m^2]", 'direct_normal'],        # 5
+        ['', ''],
+        ['Year', 'year'],
+        ['DOY', 'doy'],
+        ['MST', 'mst'],
+        ['Global Horizontal [W/m^2]', 'global_horizontal'],
+        ["Direct Normal [W/m^2]", 'direct_normal'],
         ["Diffuse Horizontal [W/m^2]", 'diffuse_horizontal'],
-        ["PR1 Temperature [deg C]", 'pr1_temperature'], 
+        ["PR1 Temperature [deg C]", 'pr1_temperature'],
         ["PH1 Temperature [deg C]", 'ph1_temperature'],
-        ["Pressure [mBar]", 'pressure'],              # 9
+        ["Pressure [mBar]", 'pressure'],
         ["Zenith Angle [degrees]", 'zenith_angle'],
         ["Azimuth Angle [degrees]", 'azimuth_angle'],
         ["RaZON Status", 'razon_status'],
-        ["RaZON Time [hhmm]", 'razon_time'],            # 13
+        ["RaZON Time [hhmm]", 'razon_time'],
         ["Logger Battery [VDC]", 'logger_battery'],
         ["Logger Temp [deg C]", 'logger_temp'],
     ]
@@ -412,23 +412,29 @@ def dbcsvtest(file_id):
     if r.status_code != 200:
         return 'error'
     csvtext = r.get_data(as_text=True)
-    reader = csv.reader(csvtext,delimiter=',')
-    header = next(reader)
 
-    #TODO: This is so, so broken
-    count = 1
+    lines = csvtext.splitlines()
+
+    count = 0
     docs = []
-    for line in reader:
-        count+=1
+    for l in lines:
+        if count == 0: #skip header row
+            count += 1
+            continue
+
+        count += 1 #just for fun
+
+        cells = l.split(',') #get all columns of data
 
         linedoc = {}
         i = 0
         for header in headerData:
-            if i < len(line):
-                linedoc[header[1]] = line[i]
-            else:
-                print('line ' + str(count) + ' missing ' + header[1])
-                break
-        docs.append(linedoc)
-    db.pytest.insert_many(docs)
-    return 'inserted ' + str(len(docs)) + ' docs'
+            linedoc[header[1]] = cells[i] #insert modified header into document with appropriate value
+            i += 1
+        
+        docs.append(linedoc) #add doc to group
+    if len(docs) > 0:
+        db.pytest.insert_many(docs) #add all docs to collection
+        return 'inserted ' + str(len(docs)) + ' docs, check compass'
+    else:
+        return 'no mongo docs generated - was it an empty csv?'
