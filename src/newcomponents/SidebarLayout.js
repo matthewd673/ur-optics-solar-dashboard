@@ -23,6 +23,7 @@ const SidebarLayout = props => {
             <Sidebar width={props.width}>
                 <NavLink exact to="/dashboard" activeStyle={{backgroundColor:"#EDEDED"}}>Dashboard</NavLink>
                 <NavLink exact to="/dashboard/graph" activeStyle={{backgroundColor:"#EDEDED"}}>Graph</NavLink>
+                <NavLink exact to="/preferences" activeStyle={{backgroundColor:"#EDEDED"}}>Preferences</NavLink>
                 <NavLink exact to="/about" activeStyle={{backgroundColor:"#EDEDED"}}>About</NavLink>
             </Sidebar>
             <main className="content" style={{ marginLeft: props.width }}>

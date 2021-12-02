@@ -17,6 +17,7 @@ import MainGraph from './routes/MainGraph';
 import AuthRedirectHandler from './routes/AuthManager';
 import BoxTest from './routes/BoxTest';
 import About from './routes/About';
+import Preferences from './routes/Preferences';
 
 moment.tz.setDefault("America/New_York");
 
@@ -42,6 +43,9 @@ ReactDOM.render(
           </Route>
           <Route path="/auth">
             <AuthRedirectHandler />
+          </Route>
+          <Route path="/preferences">
+            <Preferences />
           </Route>
           <Route path="/about">
             <About />
